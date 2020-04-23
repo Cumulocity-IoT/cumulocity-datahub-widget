@@ -1,0 +1,10 @@
+{
+  "name": "Test Widget",
+  "contextPath": "test-widget",
+  "key": "test-widget-application-key",
+  "contentSecurityPolicy": "default-src 'self'",
+  "icon": {
+    "class": "fa fa-puzzle-piece"
+  },
+  "noAppSwitcher": true
+}

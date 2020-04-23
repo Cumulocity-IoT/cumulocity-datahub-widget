@@ -1,0 +1,61 @@
+{
+  "name": "test-widget",
+  "interleave": {
+    "dist\\bundle-src\\custom-widget.js": "CustomWidget"
+  },
+  "version": "0.0.0-development",
+  "description": "Template Async Widget for the Application builder for Cumulocity (written by Software AG Global Presales)",
+  "scripts": {
+    "build": "gulp",
+    "postinstall": "patch-package"
+  },
+  "keywords": [],
+  "author": "Richard Peach - Software AG, Global Presales",
+  "license": "Apache 2.0",
+  "dependencies": {},
+  "peerDependencies": {
+    "@angular/common": "7.2.15",
+    "@angular/core": "7.2.15",
+    "@angular/forms": "7.2.15",
+    "@angular/http": "7.2.15",
+    "@angular/router": "7.2.15",
+    "@c8y/ngx-components": "1005.0.3"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "~0.10.4",
+    "@angular/animations": "7.2.15",
+    "@angular/common": "7.2.15",
+    "@angular/compiler": "7.2.15",
+    "@angular/compiler-cli": "7.2.15",
+    "@angular/core": "^7.2.15",
+    "@angular/forms": "7.2.15",
+    "@angular/http": "7.2.15",
+    "@angular/platform-browser": "^7.2.15",
+    "@angular/router": "7.2.15",
+    "@c8y/ngx-components": "1005.0.3",
+    "@ng-select/ng-select": "^2.20.5",
+    "ajv": "^6.9.1",
+    "clone-deep": "^4.0.1",
+    "core-js": "^2.6.2",
+    "del": "^5.1.0",
+    "delay": "^4.3.0",
+    "fast-deep-equal": "^3.1.1",
+    "fontawesome": "4.7.2",
+    "fs-extra": "^9.0.0",
+    "gulp": "^4.0.2",
+    "gulp-filter": "^6.0.0",
+    "gulp-zip": "^5.0.1",
+    "merge-stream": "^2.0.0",
+    "ng-packagr": "^5.7.1",
+    "patch-package": "^6.2.2",
+    "rxjs": "~6.3.3",
+    "rxjs-compat": "^6.5.3",
+    "source-map-loader": "^0.2.4",
+    "typescript": "3.1.6",
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.11",
+    "webpack-external-import": "^2.2.3",
+    "webpack-stream": "^5.2.1",
+    "zone.js": "~0.8.28"
+  }
+}
