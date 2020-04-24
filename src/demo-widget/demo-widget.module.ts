@@ -9,16 +9,19 @@ import {NgModule} from "@angular/core";
     ],
     declarations: [WidgetDemo, WidgetConfigDemo],
     entryComponents: [WidgetDemo, WidgetConfigDemo],
-    providers: [{
-        provide: HOOK_COMPONENT,
-        multi: true,
-        useValue: {
-            id: 'acme.text.widget',
-            label: 'Text widget',
-            description: 'Can display a text',
-            component: WidgetDemo,
-            configComponent: WidgetConfigDemo,
+    providers: [
+        // Connect the widget to Cumulocity via the HOOK_COMPONENT injection token
+        {
+            provide: HOOK_COMPONENT,
+            multi: true,
+            useValue: {
+                id: 'acme.test.widget',
+                label: 'Test widget',
+                description: 'Displays some mirrored text',
+                component: WidgetDemo,
+                configComponent: WidgetConfigDemo,
+            }
         }
-    }],
+    ],
 })
 export class DemoWidgetModule {}

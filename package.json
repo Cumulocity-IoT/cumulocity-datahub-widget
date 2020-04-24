@@ -1,7 +1,8 @@
 {
   "name": "test-widget",
   "interleave": {
-    "dist\\bundle-src\\custom-widget.js": "CustomWidget"
+    "dist\\bundle-src\\custom-widget.js": "test-widget-CustomWidget",
+    "dist/bundle-src/custom-widget.js": "test-widget-CustomWidget"
   },
   "version": "0.0.0-development",
   "description": "Template Async Widget for the Application builder for Cumulocity (written by Software AG Global Presales)",
