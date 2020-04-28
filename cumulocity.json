@@ -6,5 +6,7 @@
   "icon": {
     "class": "fa fa-puzzle-piece"
   },
-  "noAppSwitcher": true
+  "manifest": {
+    "noAppSwitcher": true
+  }
 }
