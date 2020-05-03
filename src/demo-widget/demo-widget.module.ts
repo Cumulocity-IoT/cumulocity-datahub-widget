@@ -1,4 +1,4 @@
-import {CoreModule, HOOK_COMPONENT} from "@c8y/ngx-components";
+import {CoreModule, HOOK_COMPONENTS} from "@c8y/ngx-components";
 import {WidgetConfigDemo} from "./demo-widget-config.component";
 import {WidgetDemo} from "./demo-widget.component";
 import {NgModule} from "@angular/core";
@@ -12,7 +12,7 @@ import {NgModule} from "@angular/core";
     providers: [
         // Connect the widget to Cumulocity via the HOOK_COMPONENT injection token
         {
-            provide: HOOK_COMPONENT,
+            provide: HOOK_COMPONENTS,
             multi: true,
             useValue: {
                 id: 'acme.test.widget',
