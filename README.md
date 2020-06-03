@@ -3,7 +3,9 @@ Template widget for runtime loading in Cumulocity using the [Cumulocity Runtime 
 
 ##  Building a Widget
 1. Clone this repo: 
-```git clone https://github.com/SoftwareAG/cumulocity-runtime-widget.git```
+```
+git clone https://github.com/SoftwareAG/cumulocity-runtime-widget.git
+```
 2. Install the dependencies:
 ```
 cd cumulocity-runtime-widget
