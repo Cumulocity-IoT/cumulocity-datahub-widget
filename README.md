@@ -1,5 +1,5 @@
 # Cumulocity Runtime Widget
-Template widget for runtime loading in Cumulocity using the [Runtime Widget Loader](https://github.com/SoftwareAG/cumulocity-runtime-widget-loader) (written by Software AG Global Presales)
+Template widget for runtime loading in Cumulocity using the [Cumulocity Runtime Widget Loader](https://github.com/SoftwareAG/cumulocity-runtime-widget-loader) (written by Software AG Global Presales)
 
 ##  Building a Widget
 1. Clone this repo: 
