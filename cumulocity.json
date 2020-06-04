@@ -1,7 +1,7 @@
 {
-  "name": "Test Widget",
-  "contextPath": "test-widget",
-  "key": "test-widget-application-key",
+  "name": "Runtime Loaded Widget",
+  "contextPath": "cumulocity-runtime-widget",
+  "key": "cumulocity-runtime-widget-application-key",
   "contentSecurityPolicy": "default-src 'self'",
   "icon": {
     "class": "fa fa-puzzle-piece"

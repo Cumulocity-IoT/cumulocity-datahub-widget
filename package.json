@@ -1,8 +1,8 @@
 {
-  "name": "test-widget",
+  "name": "cumulocity-runtime-widget",
   "interleave": {
-    "dist\\bundle-src\\custom-widget.js": "test-widget-CustomWidget",
-    "dist/bundle-src/custom-widget.js": "test-widget-CustomWidget"
+    "dist\\bundle-src\\custom-widget.js": "cumulocity-runtime-widget-CustomWidget",
+    "dist/bundle-src/custom-widget.js": "cumulocity-runtime-widget-CustomWidget"
   },
   "version": "0.0.0-development",
   "description": "Template widget for runtime loading in Cumulocity using the cumulocity-runtime-widget-loader (written by Software AG Global Presales)",
