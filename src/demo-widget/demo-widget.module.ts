@@ -3,6 +3,12 @@ import {WidgetConfigDemo} from "./demo-widget-config.component";
 import {WidgetDemo} from "./demo-widget.component";
 import {NgModule} from "@angular/core";
 
+// This will import css from the styles folder (Note: will be applied globally, not scoped to the module/components)
+// import '~styles/index.css';
+
+// You can also import css from a module
+// import 'some-module/styles.css'
+
 @NgModule({
     imports: [
         CoreModule

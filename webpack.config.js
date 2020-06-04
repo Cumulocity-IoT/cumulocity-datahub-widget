@@ -1,14 +1,23 @@
 const URLImportPlugin  = require("webpack-external-import/webpack");
+const path = require('path');
 
 module.exports = {
     mode: 'production',
     devtool: 'source-map',
+    resolve: {
+        alias: {
+            "~styles": path.resolve(__dirname, 'styles')
+        }
+    },
     module: {
         rules: [
             {
                 test: /\.js$/,
                 use: ["source-map-loader"],
                 enforce: "pre"
+            },{
+                test: /\.css$/,
+                use: ['style-loader', 'css-loader']
             }
         ]
     },

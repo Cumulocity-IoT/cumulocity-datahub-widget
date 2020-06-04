@@ -1,0 +1,10 @@
+/* --- Import other css files --- */
+/* @import "./someother.css"; */
+/* @import "~some-module/style.css"; */
+
+/* -- Set the font for the entire application to comic sans, uncomment at your peril -- */
+/*
+* {
+    font-family: "Comic Sans MS", serif;
+}
+*/
