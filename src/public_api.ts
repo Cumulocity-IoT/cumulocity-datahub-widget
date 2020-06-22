@@ -1,3 +1,3 @@
 /* Add your widget's module(s) here */
 
-export {DemoWidgetModule} from "./demo-widget/demo-widget.module";
+export {DatahubWidgetModule} from "./datahub-widget/datahub-widget.module";
