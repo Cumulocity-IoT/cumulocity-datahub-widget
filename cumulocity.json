@@ -1,7 +1,7 @@
 {
-  "name": "Runtime Loaded Widget",
-  "contextPath": "cumulocity-runtime-widget",
-  "key": "cumulocity-runtime-widget-application-key",
+  "name": "Datahub Widget",
+  "contextPath": "cumulocity-datahub-widget",
+  "key": "cumulocity-datahub-widget-application-key",
   "contentSecurityPolicy": "default-src 'self'",
   "icon": {
     "class": "fa fa-puzzle-piece"

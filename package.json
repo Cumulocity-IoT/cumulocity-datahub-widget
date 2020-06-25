@@ -1,11 +1,11 @@
 {
-  "name": "cumulocity-runtime-widget",
+  "name": "cumulocity-datahub-widget",
   "interleave": {
-    "dist\\bundle-src\\custom-widget.js": "cumulocity-runtime-widget-CustomWidget",
-    "dist/bundle-src/custom-widget.js": "cumulocity-runtime-widget-CustomWidget"
+    "dist\\bundle-src\\custom-widget.js": "cumulocity-datahub-widget-CustomWidget",
+    "dist/bundle-src/custom-widget.js": "cumulocity-datahub-widget-CustomWidget"
   },
   "version": "0.0.0-development",
-  "description": "Template widget for runtime loading in Cumulocity using the cumulocity-runtime-widget-loader (written by Software AG Global Presales)",
+  "description": "An example widget that pulls data from Cumulocity IoT DataHub (written by Software AG Global Presales)",
   "scripts": {
     "build": "gulp"
   },

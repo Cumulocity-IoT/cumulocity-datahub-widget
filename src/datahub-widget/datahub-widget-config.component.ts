@@ -16,16 +16,98 @@
 * limitations under the License.
  */
 
-import {Component, Input} from '@angular/core';
+import {Component, Input, OnDestroy} from '@angular/core';
+import {switchMap} from "rxjs/operators";
+import {from, Subject, Subscription} from "rxjs";
+import {QueryWrapperService} from "./datahub-query-wrapper-service";
+
+export interface IDatahubWidgetConfig {
+    queryString: string,
+    columns: {
+        colName: string,
+        displayName: string,
+        visibility: 'visible' | 'hidden'
+    }[]
+}
 
 @Component({
-    template: `<div class="form-group">
-    <c8y-form-group>
-      <label translate>Text</label>
-      <textarea style="width:100%" [(ngModel)]="config.text"></textarea>
-    </c8y-form-group>
-  </div>`
+    template: `
+        <div class="form-group">
+            <c8y-form-group>
+                <label translate>Text</label>
+                <textarea class="form-control" [(ngModel)]="config.queryString"
+                          (change)="updateColumnDefinitions()"></textarea>
+            </c8y-form-group>
+            <table class="table">
+                <thead>
+                    <button (click)="updateColumnDefinitions()">Refresh</button>
+                    <tr>
+                        <th>Visible</th>
+                        <th>Datahub Column</th>
+                        <th>Label</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let col of config.columns">
+                        <td><input class="form-control" type="checkbox" [checked]="col.visibility == 'visible'" (change)="col.visibility = $any($event.target).checked ? 'visible' : 'hidden'"/></td>
+                        <td>{{col.colName}}</td>
+                        <td><input class="form-control" [(ngModel)]="col.displayName"/></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>`
 })
-export class DatahubWidgetConfig {
-    @Input() config: any = {};
+export class DatahubWidgetConfig implements OnDestroy {
+    _config: IDatahubWidgetConfig = {
+        queryString: '',
+        columns: []
+    };
+
+    @Input() set config(config: IDatahubWidgetConfig) {
+        this._config = Object.assign(config, {
+            ...this._config,
+            ...config
+        });
+    };
+    get config(): IDatahubWidgetConfig {
+        return this._config
+    }
+
+    querySubject = new Subject<string>()
+    subscriptions = new Subscription();
+
+    constructor(private queryService: QueryWrapperService) {
+        this.subscriptions.add(
+            this.querySubject
+                .pipe(switchMap(query => from(this.queryService.queryForResults(query))))
+                .subscribe(result => {
+                    this.config.columns = result.schema
+                        .map(column => column.name)
+                        .map(colName => {
+                            let matchingColumn = this.config.columns.find(col => col.colName == colName);
+                            if (matchingColumn) {
+                                return matchingColumn;
+                            } else {
+                                return {
+                                    colName,
+                                    displayName: this.formatHeading(colName),
+                                    visibility: 'visible'
+                                };
+                            }
+                        });
+                })
+        );
+    }
+
+    updateColumnDefinitions() {
+        this.querySubject.next(this.config.queryString);
+    }
+
+    formatHeading(value: string): string {
+        return value.replace(/_/g, " ").replace(/([^A-Z\s])(?=[A-Z])/g, "$1 ").replace(/\s+/g, " ")
+    }
+
+    ngOnDestroy() {
+        this.subscriptions.unsubscribe();
+    }
 }

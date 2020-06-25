@@ -16,12 +16,62 @@
 * limitations under the License.
  */
 
-import { Component, Input } from '@angular/core';
+import {Component, Input, OnDestroy} from '@angular/core';
+import {BehaviorSubject, from, Subscription} from "rxjs";
+import {distinctUntilChanged, switchMap} from "rxjs/operators";
+import {IDatahubWidgetConfig} from "./datahub-widget-config.component";
+import {QueryWrapperService} from "./datahub-query-wrapper-service";
 
 @Component({
     templateUrl: './datahub-widget.component.html',
     styles: [ `.text { transform: scaleX(-1); font-size: 3em ;}` ]
 })
-export class DatahubWidgetComponent {
-    @Input() config;
+export class DatahubWidgetComponent implements OnDestroy {
+    _config: IDatahubWidgetConfig = {
+        queryString: '',
+        columns: []
+    };
+
+    @Input() set config(config: IDatahubWidgetConfig) {
+        this._config = Object.assign(config, {
+            ...this._config,
+            ...config
+        });
+        this.querySubject.next(this.config.queryString);
+        this.visibleColumns = this.config.columns.filter(col => col.visibility == 'visible') as {
+            colName: string,
+            displayName: string,
+            visibility: 'visible'
+        }[];
+    };
+    get config(): IDatahubWidgetConfig {
+        return this._config
+    }
+
+    subscriptions = new Subscription();
+    querySubject = new BehaviorSubject<undefined | string>(undefined);
+
+    visibleColumns: {
+        colName: string,
+        displayName: string,
+        visibility: 'visible'
+    }[];
+    rows: string[];
+
+    constructor(private queryService: QueryWrapperService) {
+        this.subscriptions.add(
+            this.querySubject
+                .pipe(
+                    distinctUntilChanged(),
+                    switchMap(query => from(this.queryService.queryForResults(query)))
+                )
+                .subscribe(results => {
+                    this.rows = results.rows
+                })
+        );
+    }
+
+    ngOnDestroy() {
+        this.subscriptions.unsubscribe();
+    }
 }

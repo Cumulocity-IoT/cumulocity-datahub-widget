@@ -23,13 +23,12 @@ export interface JobResult<T> {
     rows: T[]
 }
 
-
-@Injectable()
+@Injectable({providedIn: 'root'})
 export class QueryWrapperService {
 
     constructor(private queryService: QueryService) { }
 
-    async queryForResults<T = any>(queryString: string, config?: QueryConfig): Promise<JobResult<T>> {
+    async queryForResults<T = any>(queryString: string, config: QueryConfig = {}): Promise<JobResult<T>> {
         //post job
         const jobId = await this.postQuery(queryString);
 

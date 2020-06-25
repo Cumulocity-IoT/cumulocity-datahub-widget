@@ -1,17 +1,21 @@
-import { Injectable } from '@angular/core';
+import {Injectable, Injector} from '@angular/core';
 import { FetchClient } from '@c8y/ngx-components/api';
 import { IFetchOptions } from '@c8y/client';
 
-@Injectable()
+@Injectable({providedIn: 'root'})
 export class QueryService {
   private readonly dataHubDremioApi = '/service/datahub/dremio/api/v3';
+  private readonly fetchClient: FetchClient;
 
   private fetchOptions: IFetchOptions = {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' }
   };
 
-  constructor(private fetchClient: FetchClient) { }
+  constructor(injector: Injector) {
+    // Cumulocity won't let you inject this if your @Injectable is provided in root... so this is a workaround..
+    this.fetchClient = injector.get(FetchClient);
+  }
 
   async getJobState(jobId) {
     const response = await this.fetchClient.fetch(this.dataHubDremioApi + '/job/' + jobId, this.fetchOptions);

@@ -1,1 +1,10 @@
-<p class="text">{{config?.text || 'No text'}}</p>
+<table class="table">
+    <thead>
+        <tr><th *ngFor="let col of visibleColumns">{{col.displayName}}</th></tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let row of rows">
+            <td *ngFor="let col of visibleColumns">{{row[col.colName]}}</td>
+        </tr>
+    </tbody>
+</table>

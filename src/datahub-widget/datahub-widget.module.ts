@@ -38,13 +38,13 @@ import {DatahubWidgetComponent} from "./datahub-widget.component";
         {
             provide: HOOK_COMPONENTS,
             multi: true,
-            useValue: [{
+            useValue: {
                 id: 'acme.test.widget',
                 label: 'Test widget',
                 description: 'Displays some mirrored text',
                 component: DatahubWidgetComponent,
                 configComponent: DatahubWidgetConfig,
-            }]
+            }
         }
     ],
 })
