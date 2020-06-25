@@ -1,4 +1,4 @@
-import { Injectable, OnInit } from "@angular/core";
+import { Injectable } from "@angular/core";
 import { IAlarm } from "@c8y/client";
 import { QueryService } from './query.service';
 
@@ -30,19 +30,20 @@ export class QueryWrapperService {
     constructor(private queryService: QueryService) { }
 
     async queryForResults<T = any>(queryString: string, config?: QueryConfig): Promise<JobResult<T>> {
-        //receive query String
-
         //post job
         const jobId = await this.postQuery(queryString);
 
         //wait for result
-        //return result
-        return await this.waitForJobResults(jobId);
-
-        //handle errors
-        //retry until timeout reached
-        throw Error("not implmented")
-
+        try {
+            if (config.timeout) {
+                console.log("config.timeout: " + config.timeout);
+                return await this.waitForJobResults(jobId, config.timeout);
+            } else {
+                return await this.waitForJobResults(jobId);
+            }
+        } catch (e) {
+            throw e;
+        }
     }
 
     async getAlarms(): Promise<IAlarm[]> {
@@ -54,28 +55,22 @@ export class QueryWrapperService {
         return response.id.toString();
     }
 
-    //move to query.service
-    async getJobState(jobId: string): Promise<string> {
-        const response = await this.queryService.getJobState(jobId);
-        if (response.errorMessage) {
-            console.error(response.errorMessage);
+    async waitForJobResults<T>(jobId: string, timeout?: number): Promise<JobResult<T>> {
+        if (timeout) { var timeoutTime = Date.now() + timeout; }
+        let jobState = await this.queryService.getJobState(jobId);
+        try {
+            while (["RUNNING", "ENQUEUED"].includes(jobState)) {
+                if (timeout && (Date.now() > timeoutTime)) {
+                    throw new Error("Timed out");
+                }
+                console.log("pending...");
+                await this.sleep(500);
+                jobState = await this.queryService.getJobState(jobId);
+            }
+            return await this.queryService.getJobResults(jobId);
+        } catch (e) {
+            throw e;
         }
-        return response.jobState;
-    }
-
-    //add timeout
-    //If error state then throw
-    async waitForJobResults<T>(jobId: string): Promise<JobResult<T>> {
-        let jobState = await this.getJobState(jobId);
-        while (["RUNNING", "ENQUEUED"].includes(jobState)) {
-            await this.sleep(500);
-            jobState = await this.getJobState(jobId);
-        }
-        return this.getJobResults(jobId);
-    }
-
-    async getJobResults<T>(jobId: string): Promise<JobResult<T>> {
-        return this.queryService.getJobResults(jobId);
     }
 
     sleep(milliseconds) {

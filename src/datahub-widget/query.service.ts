@@ -1,6 +1,4 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
-import { throwError } from 'rxjs';
 import { FetchClient } from '@c8y/ngx-components/api';
 import { IFetchOptions } from '@c8y/client';
 
@@ -13,7 +11,7 @@ export class QueryService {
     headers: { 'Content-Type': 'application/json' }
   };
 
-  constructor(private http: HttpClient, private fetchClient: FetchClient) { }
+  constructor(private fetchClient: FetchClient) { }
 
   async getJobState(jobId) {
     const response = await this.fetchClient.fetch(this.dataHubDremioApi + '/job/' + jobId, this.fetchOptions);
