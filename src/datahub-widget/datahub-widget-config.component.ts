@@ -19,7 +19,7 @@
 import {Component, Input, OnDestroy} from '@angular/core';
 import {switchMap} from "rxjs/operators";
 import {from, Subject, Subscription} from "rxjs";
-import {QueryWrapperService} from "./datahub-query-wrapper-service";
+import {QueryService} from "./query.service";
 
 export interface IDatahubWidgetConfig {
     queryString: string,
@@ -76,7 +76,7 @@ export class DatahubWidgetConfig implements OnDestroy {
     querySubject = new Subject<string>()
     subscriptions = new Subscription();
 
-    constructor(private queryService: QueryWrapperService) {
+    constructor(private queryService: QueryService) {
         this.subscriptions.add(
             this.querySubject
                 .pipe(switchMap(query => from(this.queryService.queryForResults(query))))
