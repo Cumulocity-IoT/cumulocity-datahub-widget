@@ -18,9 +18,9 @@
 
 import {Component, Input, OnDestroy} from '@angular/core';
 import {BehaviorSubject, from, Subscription} from "rxjs";
-import {distinctUntilChanged, switchMap} from "rxjs/operators";
+import {delay, distinctUntilChanged, retryWhen, switchMap} from "rxjs/operators";
 import {IDatahubWidgetConfig} from "./datahub-widget-config.component";
-import {QueryWrapperService} from "./datahub-query-wrapper-service";
+import {QueryService} from "./query.service";
 
 @Component({
     templateUrl: './datahub-widget.component.html',
@@ -29,6 +29,8 @@ import {QueryWrapperService} from "./datahub-query-wrapper-service";
 export class DatahubWidgetComponent implements OnDestroy {
     _config: IDatahubWidgetConfig = {
         queryString: '',
+        tablePath: '',
+        refreshPeriod: 60000,
         columns: []
     };
 
@@ -58,12 +60,13 @@ export class DatahubWidgetComponent implements OnDestroy {
     }[];
     rows: string[];
 
-    constructor(private queryService: QueryWrapperService) {
+    constructor(private queryService: QueryService) {
         this.subscriptions.add(
             this.querySubject
                 .pipe(
                     distinctUntilChanged(),
-                    switchMap(query => from(this.queryService.queryForResults(query)))
+                    switchMap(query => from(this.queryService.queryForResults(query, {timeout: this.config.refreshPeriod}))),
+                    retryWhen(e => e.pipe(delay(this.config.refreshPeriod)))
                 )
                 .subscribe(results => {
                     this.rows = results.rows
