@@ -17,8 +17,8 @@
  */
 
 import {Component, Input, OnDestroy} from '@angular/core';
-import {BehaviorSubject, from, Subscription} from "rxjs";
-import {delay, distinctUntilChanged, retryWhen, switchMap} from "rxjs/operators";
+import {BehaviorSubject, from, interval, Subscription} from "rxjs";
+import {delay, distinctUntilChanged, mapTo, retryWhen, startWith, switchMap} from "rxjs/operators";
 import {IDatahubWidgetConfig} from "./datahub-widget-config.component";
 import {QueryService} from "./query.service";
 
@@ -65,6 +65,8 @@ export class DatahubWidgetComponent implements OnDestroy {
             this.querySubject
                 .pipe(
                     distinctUntilChanged(),
+                    // Re-query every refreshPeriod to refresh the data
+                    switchMap(val => interval(this.config.refreshPeriod).pipe(mapTo(val), startWith(val))),
                     switchMap(query => from(this.queryService.queryForResults(query, {timeout: this.config.refreshPeriod}))),
                     retryWhen(e => e.pipe(delay(this.config.refreshPeriod)))
                 )
