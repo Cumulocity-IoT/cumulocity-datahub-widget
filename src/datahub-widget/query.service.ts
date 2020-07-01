@@ -2,6 +2,8 @@ import { Injectable, Injector } from '@angular/core';
 import { FetchClient } from '@c8y/ngx-components/api';
 import { IFetchOptions } from '@c8y/client';
 import {IFetchResponse} from "@c8y/client/lib/src/core/IFetchResponse";
+import {defer, interval, Observable} from "rxjs";
+import {filter, first, repeatWhen} from "rxjs/operators";
 
 export interface QueryConfig {
   timeout: number,
@@ -19,6 +21,10 @@ export interface DatasetField {
       precision?: number,
       scale?: number
   }
+}
+
+export interface Job {
+  id: string
 }
 
 export interface JobResult<T> {
@@ -56,7 +62,7 @@ export class QueryService {
     const fullConfig: QueryConfig = { timeout: Number.POSITIVE_INFINITY, offset: 0, limit: 100, ...config };
 
     //post job to api
-    const job = await this.postQuery(JSON.stringify({ sql: queryString }));
+    const job = await this.postQuery(queryString);
     const jobId = job.id.toString();
 
     const jobStatusOrTimeout = await Promise.race([this.waitForJobToComplete(jobId), this.sleep(config.timeout)]);
@@ -73,7 +79,7 @@ export class QueryService {
     const jobStatus = jobStatusOrTimeout as JobStatus
 
     if (jobStatus.jobState === "COMPLETED") {
-      return await this.getJobResults<T>(jobId, fullConfig);
+      return await this.getJobResults<T>(jobId, fullConfig.offset, fullConfig.limit);
     } else if (jobStatus.jobState === "CANCELLED") {
       throw new Error(`DataHub Query Job Cancelled`);
     } else if (jobStatus.errorMessage) {
@@ -92,6 +98,15 @@ export class QueryService {
     return jobStatus;
   }
 
+  waitForJobToComplete$(jobId: string): Observable<JobStatus> {
+    return defer(() => this.getJobStatus(jobId))
+      .pipe(
+        repeatWhen(() => interval(500)),
+        filter(jobStatus => ["COMPLETED", "CANCELLED", "FAILED"].includes(jobStatus.jobState)),
+        first()
+      )
+  }
+
   async getJobStatus(jobId: string): Promise<JobStatus> {
     const response = await this.fetchClient.fetch(`${this.dataHubDremioApi}/job/${jobId}`, this.fetchOptions);
     if (response.status >= 200 && response.status < 300) {
@@ -101,8 +116,8 @@ export class QueryService {
     }
   }
 
-  async getJobResults<T = any>(jobId: string, config: QueryConfig): Promise<JobResult<T>> {
-    const response = await this.fetchClient.fetch(`${this.dataHubDremioApi}/job/${jobId}/results?offset=${config.offset}&limit=${config.limit}`, this.fetchOptions)
+  async getJobResults<T = any>(jobId: string, offset: number = 0, limit: number = 100): Promise<JobResult<T>> {
+    const response = await this.fetchClient.fetch(`${this.dataHubDremioApi}/job/${jobId}/results?offset=${offset}&limit=${limit}`, this.fetchOptions)
     if (response.status >= 200 && response.status < 300) {
       return response.json();
     } else {
@@ -110,8 +125,8 @@ export class QueryService {
     }
   }
 
-  async postQuery(query: String): Promise<any> {
-    const response = await this.fetchClient.fetch(this.dataHubDremioApi + '/sql', { ...this.fetchOptions, method: 'POST', body: query })
+  async postQuery(query: String): Promise<Job> {
+    const response = await this.fetchClient.fetch(this.dataHubDremioApi + '/sql', { ...this.fetchOptions, method: 'POST', body: JSON.stringify({ sql: query }) })
     if (response.status >= 200 && response.status < 300) {
       return response.json();
     } else {
