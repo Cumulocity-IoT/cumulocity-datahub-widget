@@ -12,7 +12,9 @@
   "keywords": [],
   "author": "Richard Peach - Software AG, Global Presales",
   "license": "Apache 2.0",
-  "dependencies": {},
+  "dependencies": {
+    "@swimlane/ngx-datatable": "^17.0.0"
+  },
   "peerDependencies": {
     "@angular/common": "8.2.13",
     "@angular/core": "8.2.13",

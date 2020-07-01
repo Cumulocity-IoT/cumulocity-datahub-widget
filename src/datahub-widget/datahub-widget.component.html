@@ -1,10 +1,14 @@
-<table class="table">
-    <thead>
-        <tr><th *ngFor="let col of visibleColumns">{{col.displayName}}</th></tr>
-    </thead>
-    <tbody>
-        <tr *ngFor="let row of rows">
-            <td *ngFor="let col of visibleColumns">{{row[col.colName]}}</td>
-        </tr>
-    </tbody>
-</table>
+<ngx-datatable
+        class="bootstrap"
+        [rows]="rows"
+        [loadingIndicator]="true"
+        [columns]="cols"
+        [columnMode]="ColumnMode.force"
+        [headerHeight]="40"
+        [summaryRow]="true"
+        [summaryPosition]="'bottom'"
+        [footerHeight]="40"
+        [limit]="10"
+        rowHeight="auto"
+        [reorderable]="true"
+></ngx-datatable>

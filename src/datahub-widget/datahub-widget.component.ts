@@ -21,6 +21,7 @@ import {BehaviorSubject, from, interval, Subscription} from "rxjs";
 import {delay, distinctUntilChanged, mapTo, retryWhen, startWith, switchMap} from "rxjs/operators";
 import {IDatahubWidgetConfig} from "./datahub-widget-config.component";
 import {QueryService} from "./query.service";
+import { ColumnMode } from '@swimlane/ngx-datatable';
 
 @Component({
     templateUrl: './datahub-widget.component.html',
@@ -40,25 +41,27 @@ export class DatahubWidgetComponent implements OnDestroy {
             ...config
         });
         this.querySubject.next(this.config.queryString);
-        this.visibleColumns = this.config.columns.filter(col => col.visibility == 'visible') as {
-            colName: string,
-            displayName: string,
-            visibility: 'visible'
-        }[];
+        this.cols = this.config.columns
+            .filter(col => col.visibility == 'visible')
+            .map(col => ({
+                prop: col.colName,
+                name: col.displayName
+            }));
     };
     get config(): IDatahubWidgetConfig {
         return this._config
     }
 
+    ColumnMode = ColumnMode;
+
     subscriptions = new Subscription();
     querySubject = new BehaviorSubject<undefined | string>(undefined);
 
-    visibleColumns: {
-        colName: string,
-        displayName: string,
-        visibility: 'visible'
+    cols: {
+        prop: string,
+        name: string
     }[];
-    rows: string[];
+    rows: {[colName: string]: any}[] = [];
 
     constructor(private queryService: QueryService) {
         this.subscriptions.add(

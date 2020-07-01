@@ -20,6 +20,7 @@ import {CoreModule, HOOK_COMPONENTS} from "@c8y/ngx-components";
 import {DatahubWidgetConfig} from "./datahub-widget-config.component";
 import {NgModule} from "@angular/core";
 import {DatahubWidgetComponent} from "./datahub-widget.component";
+import {NgxDatatableModule} from "@swimlane/ngx-datatable";
 
 // This will import css from the styles folder (Note: will be applied globally, not scoped to the module/components)
 // import '~styles/index.css';
@@ -29,7 +30,8 @@ import {DatahubWidgetComponent} from "./datahub-widget.component";
 
 @NgModule({
     imports: [
-        CoreModule
+        CoreModule,
+        NgxDatatableModule
     ],
     declarations: [DatahubWidgetComponent, DatahubWidgetConfig],
     entryComponents: [DatahubWidgetComponent, DatahubWidgetConfig],
