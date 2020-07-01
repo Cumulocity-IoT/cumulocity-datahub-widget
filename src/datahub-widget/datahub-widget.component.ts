@@ -131,7 +131,7 @@ export class DatahubWidgetComponent implements OnDestroy {
 
                     // We're using virtual paging so need to know the total number of rows
                     this.totalRowCount = jobStatus.rowCount || 0;
-                    this.rows = new Array(this.totalRowCount).fill(undefined);
+                    this.rows = new Array(this.totalRowCount);
                     this.currentJob = job;
                     this.pagesLoading = 0;
                     this.setPage(this.pageInfo);
@@ -145,28 +145,42 @@ export class DatahubWidgetComponent implements OnDestroy {
         const pageNumber = this.pageInfo.offset;
         const pageSize = this.pageInfo.pageSize;
 
-        const pageStart = pageNumber * pageSize;
-
-        if (!this.areRowsLoaded(pageStart, pageSize)) {
-            this.loadRows(pageStart, pageSize)
-                .catch(e => console.error(e));
-        }
         // We also load the previous/next page so that scrolling isn't too slow and so that refreshes don't mess up when on a boundary
+
+        const pageStart = pageNumber * pageSize;
         const previousPageStart = (pageNumber - 1) * pageSize;
-        if (previousPageStart >= 0 && !this.areRowsLoaded(previousPageStart, pageSize)) {
-            this.loadRows(previousPageStart, pageSize)
-                .catch(e => console.error(e));
-        }
         const nextPageStart = (pageNumber + 1) * pageSize;
-        if (nextPageStart < this.rows.length && !this.areRowsLoaded(nextPageStart, pageSize)) {
-            this.loadRows(nextPageStart, pageSize)
+
+        const loadPage = !this.areRowsLoaded(pageStart, pageSize);
+        const loadPreviousPage = pageNumber > 0 && !this.areRowsLoaded(pageStart, pageSize);
+        const loadNextPage = this.totalRowCount > nextPageStart && !this.areRowsLoaded(pageStart, pageSize);
+
+        const start = loadPreviousPage ? previousPageStart : loadPage ? pageStart : nextPageStart;
+        const count = loadPreviousPage ?
+            loadNextPage ?
+                pageSize * 3
+                : loadPage ? pageSize * 2 : pageSize
+            : loadPage ?
+                loadNextPage ?
+                    pageSize * 2 : pageSize
+                : loadNextPage ? pageSize : 0;
+
+        if (count > 0) {
+            this.loadRows(start, count)
                 .catch(e => console.error(e));
         }
     }
 
     areRowsLoaded(start: number, count: number, includeLoadingRows: boolean = true) {
-        // undefined means row not loaded, null means loading, and a value mean it is loaded
-        return !this.rows.slice(start, start + count).some(row => includeLoadingRows ? row === undefined : (row === undefined || row === null))
+        // hole means row not loaded, undefined means loading, and a value mean it is loaded
+        for (let i = start; i < start + count; i ++) {
+            if (!this.rows.hasOwnProperty(i)) { // Check for hole
+                return false;
+            } else if (!includeLoadingRows && !this.rows[i]) { // Check for undefined
+                return false;
+            }
+        }
+        return true;
     }
 
     async loadRows(start: number, count: number) {
@@ -179,8 +193,8 @@ export class DatahubWidgetComponent implements OnDestroy {
 
         // Mark the rows as loading (So that they aren't loaded twice)
         for (let i = start; i <= start + count && i < this.rows.length; i++) {
-            // null means loading
-            this.rows[i] = this.rows[i] || null;
+            // undefined means loading
+            this.rows[i] = this.rows[i] || undefined;
         }
 
         const results = await this.queryService.getJobResults(job.id, start, count);
@@ -189,7 +203,7 @@ export class DatahubWidgetComponent implements OnDestroy {
         if (job.id !== this.currentJob.id) return;
 
         // Clone the rows array - change detection assumes that the objects + arrays are immutable
-        const rows = [...this.rows];
+        const rows = this.rows.slice();
         // Add the new items
         rows.splice(start, results.rows.length, ...results.rows);
         // Update the list of rows
