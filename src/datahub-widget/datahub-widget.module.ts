@@ -23,10 +23,7 @@ import {DatahubWidgetComponent} from "./datahub-widget.component";
 import {NgxDatatableModule} from "@swimlane/ngx-datatable";
 
 // This will import css from the styles folder (Note: will be applied globally, not scoped to the module/components)
-// import '~styles/index.css';
-
-// You can also import css from a module
-// import 'some-module/styles.css'
+import '~styles/index.css';
 
 @NgModule({
     imports: [
@@ -41,9 +38,9 @@ import {NgxDatatableModule} from "@swimlane/ngx-datatable";
             provide: HOOK_COMPONENTS,
             multi: true,
             useValue: {
-                id: 'acme.test.widget',
-                label: 'Test widget',
-                description: 'Displays some mirrored text',
+                id: 'softwareag.globalpresales.datahubwidget',
+                label: 'DataHub Table',
+                description: 'Displays DataHub query results in a table',
                 component: DatahubWidgetComponent,
                 configComponent: DatahubWidgetConfig,
             }

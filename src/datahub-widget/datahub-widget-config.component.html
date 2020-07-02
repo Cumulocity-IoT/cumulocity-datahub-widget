@@ -1,0 +1,61 @@
+<div class="form-group">
+    <c8y-form-group>
+        <label translate>Table</label>
+        <select [(ngModel)]="config.tablePath" (ngModelChange)="updateQueryForTableSelection($event)"
+                *ngIf="tablesBySchema | async as tableSchemas else loadingTableList">
+            <ng-container>
+                <optgroup *ngFor="let tableSchema of tableSchemas | keyvalue" [label]="tableSchema.key">
+                    <option *ngFor="let table of tableSchema.value"
+                            [ngValue]="tablePath(table)">{{table.TABLE_NAME}}</option>
+                </optgroup>
+            </ng-container>
+        </select>
+        <ng-template #loadingTableList>
+            <select disabled="true">
+                <option>Loading...</option>
+            </select>
+        </ng-template>
+    </c8y-form-group>
+    <c8y-form-group>
+        <label translate>SQL Statement</label>
+        <textarea class="form-control" [(ngModel)]="config.queryString"
+                  (change)="updateColumnDefinitions()"></textarea>
+    </c8y-form-group>
+    <c8y-form-group>
+        <label translate>Refresh Period (Seconds)</label>
+        <input class="form-control" type="number" min="1" step="1" [ngModel]="config.refreshPeriod / 1000" (ngModelChange)="config.refreshPeriod = $event * 1000"/>
+    </c8y-form-group>
+    <table class="table">
+        <colgroup>
+            <col style="width: 4em">
+            <col style="width: 4em">
+        </colgroup>
+        <thead>
+        <button (click)="updateColumnDefinitions()">Refresh</button>
+        <tr>
+            <th>Visible</th>
+            <th>Datahub Column</th>
+            <th>Label</th>
+        </tr>
+        </thead>
+        <tbody>
+        <ng-container *ngIf="config.columns?.length > 0 else loadingColumns">
+            <tr *ngFor="let col of config.columns">
+                <td>
+                    <div class="checkbox">
+                        <input type="checkbox" [checked]="col.visibility == 'visible'"
+                               (change)="col.visibility = $any($event.target).checked ? 'visible' : 'hidden'">
+                    </div>
+                </td>
+                <td style="text-align: right;">{{col.colName}}</td>
+                <td><input class="form-control" [(ngModel)]="col.displayName"/></td>
+            </tr>
+        </ng-container>
+        <ng-template #loadingColumns>
+            <tr>
+                <td colspan="3">Loading...</td>
+            </tr>
+        </ng-template>
+        </tbody>
+    </table>
+</div>

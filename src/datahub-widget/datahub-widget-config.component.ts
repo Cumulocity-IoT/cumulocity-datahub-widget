@@ -17,9 +17,22 @@
  */
 
 import {Component, Input, OnDestroy} from '@angular/core';
-import {filter, retry, switchMap, tap} from "rxjs/operators";
-import {from, Subject, Subscription} from "rxjs";
-import {QueryService} from "./query.service";
+import {
+    catchError,
+    concatMap,
+    delay,
+    filter,
+    map,
+    mapTo,
+    retry,
+    retryWhen,
+    scan,
+    startWith,
+    switchMap,
+    tap
+} from "rxjs/operators";
+import {EMPTY, from, interval, Subject, Subscription} from "rxjs";
+import {Job, JobStatus, QueryService} from "./query.service";
 import {AlertService} from "@c8y/ngx-components";
 
 export interface IDatahubWidgetConfig {
@@ -41,68 +54,7 @@ interface DremioTableDescription {
 }
 
 @Component({
-    template: `
-        <div class="form-group">
-            <c8y-form-group>
-                <label translate>Table</label>
-                <select [(ngModel)]="config.tablePath" (ngModelChange)="updateQueryForTableSelection($event)"
-                        *ngIf="tablesBySchema | async as tableSchemas else loadingTableList">
-                    <ng-container>
-                        <optgroup *ngFor="let tableSchema of tableSchemas | keyvalue" [label]="tableSchema.key">
-                            <option *ngFor="let table of tableSchema.value"
-                                    [ngValue]="tablePath(table)">{{table.TABLE_NAME}}</option>
-                        </optgroup>
-                    </ng-container>
-                </select>
-                <ng-template #loadingTableList>
-                    <select disabled="true">
-                        <option>Loading...</option>
-                    </select>
-                </ng-template>
-            </c8y-form-group>
-            <c8y-form-group>
-                <label translate>SQL Statement</label>
-                <textarea class="form-control" [(ngModel)]="config.queryString"
-                          (change)="updateColumnDefinitions()"></textarea>
-            </c8y-form-group>
-            <c8y-form-group>
-                <label translate>Refresh Period (Seconds)</label>
-                <input class="form-control" type="number" min="1" step="1" [ngModel]="config.refreshPeriod / 1000" (ngModelChange)="config.refreshPeriod = $event * 1000"/>
-            </c8y-form-group>
-            <table class="table">
-                <colgroup>
-                    <col style="width: 4em">
-                    <col style="width: 4em">
-                </colgroup>
-                <thead>
-                <button (click)="updateColumnDefinitions()">Refresh</button>
-                <tr>
-                    <th>Visible</th>
-                    <th>Datahub Column</th>
-                    <th>Label</th>
-                </tr>
-                </thead>
-                <tbody>
-                <ng-container *ngIf="config.columns?.length > 0 else loadingColumns">
-                    <tr *ngFor="let col of config.columns">
-                        <td>
-                            <div class="checkbox">
-                                <input type="checkbox" [checked]="col.visibility == 'visible'"
-                                       (change)="col.visibility = $any($event.target).checked ? 'visible' : 'hidden'">
-                            </div>
-                        </td>
-                        <td style="text-align: right;">{{col.colName}}</td>
-                        <td><input class="form-control" [(ngModel)]="col.displayName"/></td>
-                    </tr>
-                </ng-container>
-                <ng-template #loadingColumns>
-                    <tr>
-                        <td colspan="3">Loading...</td>
-                    </tr>
-                </ng-template>
-                </tbody>
-            </table>
-        </div>`
+    templateUrl: './datahub-widget-config.component.html'
 })
 export class DatahubWidgetConfig implements OnDestroy {
     _config: IDatahubWidgetConfig = {
@@ -111,6 +63,9 @@ export class DatahubWidgetConfig implements OnDestroy {
         refreshPeriod: 60000,
         columns: []
     };
+    querySubject = new Subject<string>()
+    subscriptions = new Subscription();
+    tablesBySchema: Promise<{ [schemaName: string]: DremioTableDescription[] }>;
 
     @Input() set config(config: IDatahubWidgetConfig) {
         this._config = Object.assign(config, {
@@ -122,23 +77,43 @@ export class DatahubWidgetConfig implements OnDestroy {
         return this._config
     }
 
-    querySubject = new Subject<string>()
-    subscriptions = new Subscription();
-
-    tablesBySchema: Promise<{
-        [schemaName: string]: DremioTableDescription[]
-    }>;
-
     constructor(private queryService: QueryService, private alertService: AlertService) {
         this.subscriptions.add(
             this.querySubject
                 .pipe(
+                    // Filter out any blank or undefined queries
                     filter(query => !!query),
-                    switchMap(query => from(this.queryService.queryForResults(query, {timeout: this.config.refreshPeriod}))),
+                    // Re-query every refreshPeriod to refresh the data
+                    switchMap(val => interval(this.config.refreshPeriod).pipe(mapTo(val), startWith(val))),
+                    // Start the job - Keep the responses in order by using concatMap
+                    concatMap(query => from(this.queryService.postQuery(query))),
+                    // Cancel the previous job if we get a new one
+                    scan((previousJob, job) => {
+                        // Ignore the result - if we can't cancel the query it has probably finished already
+                        this.queryService.cancelJob(previousJob.id).catch(e => console.debug("Query cancellation failed", e));
+                        return job;
+                    }),
+                    // Wait for the job to complete - erroring if it does not complete successfully
+                    switchMap(job => this.queryService.waitForJobToComplete$(job.id).pipe(
+                        map(jobStatus => {
+                            if (jobStatus.jobState === 'COMPLETED') {
+                                return [job, jobStatus] as [Job, JobStatus];
+                            } else if (jobStatus.errorMessage) {
+                                throw new Error(`Query job failed: ${jobStatus.errorMessage}`);
+                            } else {
+                                throw new Error("Query job failed");
+                            }
+                        })
+                    )),
+                    // Get the schema - we don't care about the data (hence the limit: 0)
+                    switchMap(([job]) => from(this.queryService.getJobResults(job.id, 0, 0))),
+                    // Show the user the error - there might be information about why their query didn't work
                     tap({error: e => this.showError(e)}),
-                    retry()
+                    // Handle errors by doing nothing - the user can trigger another query by editing or clicking refresh
+                    catchError(() => EMPTY)
                 )
                 .subscribe(result => {
+                    // Read the schema from the results set and convert it for use in the config (for change the headings, hiding columns...)
                     this.config.columns = result.schema
                         .map(column => column.name)
                         .map(colName => {
@@ -148,7 +123,7 @@ export class DatahubWidgetConfig implements OnDestroy {
                             } else {
                                 return {
                                     colName,
-                                    displayName: this.formatHeading(colName),
+                                    displayName: this.niceName(colName),
                                     visibility: 'visible'
                                 };
                             }
@@ -161,6 +136,9 @@ export class DatahubWidgetConfig implements OnDestroy {
         }
     }
 
+    /**
+     * Finds a list of table names, grouped by their schemaName
+     */
     async getTablesBySchema(): Promise<{ [schemaName: string]: DremioTableDescription[] }> {
         try {
             const res = await this.queryService.queryForResults<DremioTableDescription>(`select * from INFORMATION_SCHEMA."TABLES"`, {timeout: this.config.refreshPeriod})
@@ -170,6 +148,7 @@ export class DatahubWidgetConfig implements OnDestroy {
                 .filter(table => table.TABLE_SCHEMA.split('.')[0] !== 'sys')
                 // Filter out the INFORMATION_SCHEMA - the user probably isn't looking for this (They can still query it manually if they want to)
                 .filter(table => table.TABLE_SCHEMA !== 'INFORMATION_SCHEMA')
+                // Group the tables by their schema name
                 .reduce((acc, table) => {
                     if (!acc[table.TABLE_SCHEMA]) {
                         acc[table.TABLE_SCHEMA] = [];
@@ -188,8 +167,16 @@ export class DatahubWidgetConfig implements OnDestroy {
         this.querySubject.next(this.config.queryString);
     }
 
-    formatHeading(value: string): string {
-        return value.replace(/_/g, " ").replace(/([^A-Z\s])(?=[A-Z])/g, "$1 ").replace(/\s+/g, " ");
+    niceName(value: string): string {
+        return value
+            // Convert underscores and dashes to spaces
+            .replace(/[-_]/g, " ")
+            // Put a space between camel cased letters
+            .replace(/([^A-Z\s])(?=[A-Z])/g, "$1 ")
+            // Remove any duplicate spaces
+            .replace(/\s+/g, " ")
+            // Remove spaces from the start and end
+            .trim();
     }
 
     updateQueryForTableSelection(tablePath: string) {
@@ -203,7 +190,7 @@ export class DatahubWidgetConfig implements OnDestroy {
 
     showError(msg: string, e?: Error | unknown) {
         console.error(msg, e);
-        if (e instanceof Error || (e && e.hasOwnProperty("message"))) {
+        if (e instanceof Error || (e && e.hasOwnProperty("errorMessage"))) {
             this.alertService.danger(msg, (e as any).errorMessage);
         } else {
             this.alertService.danger(msg);

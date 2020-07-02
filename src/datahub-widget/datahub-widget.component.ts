@@ -16,22 +16,22 @@
 * limitations under the License.
  */
 
-import {Component, Input, OnDestroy} from '@angular/core';
+import {Component, HostListener, Input, OnDestroy, ViewChild} from '@angular/core';
 import {BehaviorSubject, from, interval, Subscription} from "rxjs";
 import {
     concatMap,
     delay,
-    distinctUntilChanged, filter,
+    filter,
     map,
     mapTo,
-    reduce,
     retryWhen, scan,
     startWith,
     switchMap
 } from "rxjs/operators";
 import {IDatahubWidgetConfig} from "./datahub-widget-config.component";
 import {Job, JobStatus, QueryService} from "./query.service";
-import { ColumnMode } from '@swimlane/ngx-datatable';
+import {ColumnMode, DatatableComponent} from '@swimlane/ngx-datatable';
+import { DashboardChildComponent } from '@c8y/ngx-components';
 
 interface PageInfo {
     offset: number;
@@ -46,19 +46,11 @@ interface PageInfo {
         .ngx-datatable.scroll-vertical {
             height: 100%;
         }
-        .ngx-datatable.material .datatable-header .datatable-header-cell {
-            text-align: left;
-            padding: .9rem 1.2rem;
-            padding-top: 0.9rem;
-            padding-right: 1.2rem;
-            padding-bottom: 0.9rem;
-            padding-left: 1.2rem;
-            font-weight: 400;
-            background-color: #fff;
-            color: rgba(0,0,0,.54);
-            vertical-align: bottom;
-            font-size: 12px;
-            font-weight: 500;
+        .ngx-datatable.material >>> .datatable-header .datatable-header-cell .resize-handle {
+            height: 100%;
+        }
+        .ngx-datatable.material >>> .datatable-header .datatable-header-cell {
+            padding: 1.9rem 1.2rem;
         }
     ` ]
 })
@@ -97,7 +89,19 @@ export class DatahubWidgetComponent implements OnDestroy {
         return this._config
     }
 
-    constructor(private queryService: QueryService) {
+    @ViewChild(DatatableComponent, {static: true}) table: DatatableComponent;
+
+    @HostListener('window:resize')
+    onResize() {
+        if (this.table) {
+            setTimeout(() => this.table.recalculate(), 100);
+        }
+    }
+
+    constructor(private queryService: QueryService, private container: DashboardChildComponent) {
+        // Widget was resized manually
+        this.container.changeEnd.subscribe((change: DashboardChildComponent) => this.onResize());
+
         this.subscriptions.add(
             this.querySubject
                 .pipe(
@@ -110,7 +114,7 @@ export class DatahubWidgetComponent implements OnDestroy {
                     // Cancel the previous job if we get a new one
                     scan((previousJob, job) => {
                         // Ignore the result - if we can't cancel the query it has probably finished already
-                        this.queryService.cancelJob(previousJob.id);
+                        this.queryService.cancelJob(previousJob.id).catch(e => console.debug("Query cancellation failed", e));
                         return job;
                     }),
                     // Wait for the job to complete - erroring if it does not complete successfully
@@ -118,6 +122,8 @@ export class DatahubWidgetComponent implements OnDestroy {
                         map(jobStatus => {
                             if (jobStatus.jobState === 'COMPLETED') {
                                 return [job, jobStatus] as [Job, JobStatus];
+                            } else if (jobStatus.errorMessage) {
+                                throw new Error(`Query job failed: ${jobStatus.errorMessage}`);
                             } else {
                                 throw new Error("Query job failed");
                             }
@@ -146,14 +152,13 @@ export class DatahubWidgetComponent implements OnDestroy {
         const pageSize = this.pageInfo.pageSize;
 
         // We also load the previous/next page so that scrolling isn't too slow and so that refreshes don't mess up when on a boundary
-
         const pageStart = pageNumber * pageSize;
         const previousPageStart = (pageNumber - 1) * pageSize;
         const nextPageStart = (pageNumber + 1) * pageSize;
 
         const loadPage = !this.areRowsLoaded(pageStart, pageSize);
-        const loadPreviousPage = pageNumber > 0 && !this.areRowsLoaded(pageStart, pageSize);
-        const loadNextPage = this.totalRowCount > nextPageStart && !this.areRowsLoaded(pageStart, pageSize);
+        const loadPreviousPage = pageNumber > 0 && !this.areRowsLoaded(previousPageStart, pageSize);
+        const loadNextPage = this.totalRowCount > nextPageStart && !this.areRowsLoaded(nextPageStart, pageSize);
 
         const start = loadPreviousPage ? previousPageStart : loadPage ? pageStart : nextPageStart;
         const count = loadPreviousPage ?
