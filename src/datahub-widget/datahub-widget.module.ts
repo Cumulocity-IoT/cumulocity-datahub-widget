@@ -23,7 +23,7 @@ import {DatahubWidgetComponent} from "./datahub-widget.component";
 import {NgxDatatableModule} from "@swimlane/ngx-datatable";
 
 // This will import css from the styles folder (Note: will be applied globally, not scoped to the module/components)
-// import '~styles/index.css';
+import '~styles/index.css';
 
 @NgModule({
     imports: [

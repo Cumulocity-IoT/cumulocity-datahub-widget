@@ -16,7 +16,7 @@
 * limitations under the License.
  */
 
-import {Component, HostListener, Input, OnDestroy, ViewChild} from '@angular/core';
+import {Component, HostListener, Input, OnDestroy, OnInit, Optional, ViewChild, ViewContainerRef} from '@angular/core';
 import {BehaviorSubject, from, interval, Subscription} from "rxjs";
 import {
     concatMap,
@@ -55,7 +55,7 @@ interface PageInfo {
         }
     ` ]
 })
-export class DatahubWidgetComponent implements OnDestroy {
+export class DatahubWidgetComponent implements OnInit, OnDestroy {
     _config: IDatahubWidgetConfig = {
         queryString: '',
         tablePath: '',
@@ -99,10 +99,7 @@ export class DatahubWidgetComponent implements OnDestroy {
         }
     }
 
-    constructor(private queryService: QueryService, private container: DashboardChildComponent) {
-        // Widget was resized manually
-        this.container.changeEnd.subscribe(() => this.onResize());
-
+    constructor(private queryService: QueryService, private viewContainerRef: ViewContainerRef, @Optional() private container: DashboardChildComponent) {
         this.subscriptions.add(
             this.querySubject
                 .pipe(
@@ -221,6 +218,22 @@ export class DatahubWidgetComponent implements OnDestroy {
 
         this.pagesLoading--;
     };
+
+    ngOnInit(): void {
+        // When running as a Runtime Loaded Widget the injector does not contain a DashboardChildComponent so we get it from the viewContainerRef (nice and hacky!)
+        // All of this is just so that we can handle the user resizing the widget, it is not critical if it fails, so we catch errors and just log
+        if (!this.container) {
+            try {
+                this.container = this.viewContainerRef["_view"].viewContainerParent.component.host.injector.get(DashboardChildComponent);
+            } catch(e) {}
+        }
+        if (this.container) {
+            // Widget was resized manually, so trigger a redraw of the table
+            this.container.changeEnd.subscribe(() => this.onResize());
+        } else {
+            console.log("DataHub Widget couldn't get container component");
+        }
+    }
 
     ngOnDestroy() {
         this.subscriptions.unsubscribe();
