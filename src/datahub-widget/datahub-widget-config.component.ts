@@ -20,12 +20,9 @@ import {Component, Input, OnDestroy} from '@angular/core';
 import {
     catchError,
     concatMap,
-    delay,
     filter,
     map,
     mapTo,
-    retry,
-    retryWhen,
     scan,
     startWith,
     switchMap,

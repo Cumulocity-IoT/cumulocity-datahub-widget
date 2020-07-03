@@ -31,7 +31,7 @@ import {
 import {IDatahubWidgetConfig} from "./datahub-widget-config.component";
 import {Job, JobStatus, QueryService} from "./query.service";
 import {ColumnMode, DatatableComponent} from '@swimlane/ngx-datatable';
-import { DashboardChildComponent } from '@c8y/ngx-components';
+import {DashboardChildComponent} from '@c8y/ngx-components';
 
 interface PageInfo {
     offset: number;
@@ -40,6 +40,7 @@ interface PageInfo {
     count: number;
 }
 
+// noinspection CssUnusedSymbol
 @Component({
     templateUrl: './datahub-widget.component.html',
     styles: [ `
@@ -100,7 +101,7 @@ export class DatahubWidgetComponent implements OnDestroy {
 
     constructor(private queryService: QueryService, private container: DashboardChildComponent) {
         // Widget was resized manually
-        this.container.changeEnd.subscribe((change: DashboardChildComponent) => this.onResize());
+        this.container.changeEnd.subscribe(() => this.onResize());
 
         this.subscriptions.add(
             this.querySubject
@@ -152,23 +153,16 @@ export class DatahubWidgetComponent implements OnDestroy {
         const pageSize = this.pageInfo.pageSize;
 
         // We also load the previous/next page so that scrolling isn't too slow and so that refreshes don't mess up when on a boundary
-        const pageStart = pageNumber * pageSize;
+        const currentPageStart = pageNumber * pageSize;
         const previousPageStart = (pageNumber - 1) * pageSize;
         const nextPageStart = (pageNumber + 1) * pageSize;
 
-        const loadPage = !this.areRowsLoaded(pageStart, pageSize);
+        const loadCurrentPage = !this.areRowsLoaded(currentPageStart, pageSize);
         const loadPreviousPage = pageNumber > 0 && !this.areRowsLoaded(previousPageStart, pageSize);
         const loadNextPage = this.totalRowCount > nextPageStart && !this.areRowsLoaded(nextPageStart, pageSize);
 
-        const start = loadPreviousPage ? previousPageStart : loadPage ? pageStart : nextPageStart;
-        const count = loadPreviousPage ?
-            loadNextPage ?
-                pageSize * 3
-                : loadPage ? pageSize * 2 : pageSize
-            : loadPage ?
-                loadNextPage ?
-                    pageSize * 2 : pageSize
-                : loadNextPage ? pageSize : 0;
+        const start = loadPreviousPage ? previousPageStart : loadCurrentPage ? currentPageStart : nextPageStart;
+        const count = ((loadPreviousPage ? 1 : 0) + (loadCurrentPage || (loadPreviousPage && loadNextPage) ? 1 : 0) + (loadNextPage ? 1 : 0)) * pageSize;
 
         if (count > 0) {
             this.loadRows(start, count)
@@ -218,7 +212,7 @@ export class DatahubWidgetComponent implements OnDestroy {
         if (
             results.rows.length < count         // Did datahub miss any expected rows?
             && start + count < this.rows.length // Were we actually expecting these rows?
-            && results.rows.length > 0          // Did it just return 0 rows? - if so then there's probably something else wrong (maybe the rowCount is currently wrong)
+            && results.rows.length > 0          // Did it just return 0 rows? - if so then there's probably something else wrong (maybe the rowCount is currently wrong) - we don't want to keep polling forever
             && !this.areRowsLoaded(start + results.rows.length, count - results.rows.length, false)     // Have we already loaded these rows?
         ) {
             console.debug(`DataHub didn't provide ${count - results.rows.length} rows, requesting missing rows...`)

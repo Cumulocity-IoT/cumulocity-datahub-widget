@@ -1,9 +1,10 @@
-import { Injectable, Injector } from '@angular/core';
-import { FetchClient } from '@c8y/ngx-components/api';
-import { IFetchOptions } from '@c8y/client';
+import {Injectable, Injector} from '@angular/core';
+import {FetchClient} from '@c8y/ngx-components/api';
+import {IFetchOptions} from '@c8y/client';
 import {IFetchResponse} from "@c8y/client/lib/src/core/IFetchResponse";
-import {defer, interval, Observable} from "rxjs";
-import {filter, first, repeatWhen} from "rxjs/operators";
+import {defer, Observable} from "rxjs";
+import {filter, first} from "rxjs/operators";
+import {repeatBackoff} from "./repeatBackoff";
 
 export interface QueryConfig {
   timeout: number,
@@ -90,18 +91,13 @@ export class QueryService {
   }
 
   async waitForJobToComplete(jobId: string): Promise<JobStatus> {
-    let jobStatus = await this.getJobStatus(jobId);
-    while (["PENDING", "METADATA_RETRIEVAL", "PLANNING", "QUEUED", "ENGINE_START", "EXECUTION_PLANNING", "STARTING", "RUNNING"].includes(jobStatus.jobState)) { // Not COMPLETED, CANCELLED, FAILED
-      await this.sleep(500);
-      jobStatus = await this.getJobStatus(jobId);
-    }
-    return jobStatus;
+    return this.waitForJobToComplete$(jobId).toPromise();
   }
 
   waitForJobToComplete$(jobId: string): Observable<JobStatus> {
     return defer(() => this.getJobStatus(jobId))
       .pipe(
-        repeatWhen(() => interval(500)),
+        repeatBackoff({initialDelay: 300, maxDelay: 30000}),
         filter(jobStatus => ["COMPLETED", "CANCELLED", "FAILED"].includes(jobStatus.jobState)),
         first()
       )
@@ -143,21 +139,25 @@ export class QueryService {
     }
   }
 
-  sleep(milliseconds): Promise<void> {
-    return new Promise(resolve => setTimeout(() => resolve(), milliseconds));
+  sleep(milliseconds: number): Promise<void> {
+    if (milliseconds === Number.POSITIVE_INFINITY || milliseconds < 0) {
+      return new Promise(() => {});
+    } else {
+      return new Promise(resolve => setTimeout(() => resolve(), milliseconds));
+    }
   }
 
+  // noinspection JSMethodCanBeStatic
   private async throwErrorResponse(response: IFetchResponse) {
     // Can only access response body once so we get it as text and then manually json-ify it
     const text = await response.text();
+    let json;
     try {
-      const json = JSON.parse(text);
-      if (json && json.errorMessage) {
-        throw new Error(json.errorMessage);
-      } else {
-        throw new Error(text);
-      }
-    } catch (e) {
+      json = JSON.parse(text);
+    } catch (e) {}
+    if (json && json.errorMessage) {
+      throw new Error(json.errorMessage);
+    } else {
       throw new Error(text);
     }
   }

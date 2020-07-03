@@ -1,63 +1,48 @@
-# Cumulocity IoT Runtime Widget Template
-Template widget for runtime loading in Cumulocity IoT using the [Cumulocity IoT Runtime Widget Loader](https://github.com/SoftwareAG/cumulocity-runtime-widget-loader) (written by Software AG Global Presales)
+# Cumulocity IoT DataHub Table Widget
+A table widget for Cumulocity IoT displaying the results of a DataHub query.
 
-##  Building a Widget
+## Installing the widget
+There are 2 options for installtion:
+1. Using the [Runtime Widget Loader](https://github.com/SoftwareAG/cumulocity-runtime-widget-loader) - Just upload the widget as a zip to your tenant
+2. Building a custom Cumulocity IoT Application - Add the widget as a library
+
+### Installation - Using the Runtime Widget Loader
+1. Download the latest `datahub-widget.zip` file from the releases section.
+2. Make sure you have either a version of the Cockpit or the AppBuilder that supports runtime widget loading.
+3. Open a dashboard
+4. Click `more...`
+5. Select `Install widget` and follow the instructions
+
+### Installation - As a library
+1. (Optional, if you already have a Cumulocity application) Create a new Cumulocity application using the cockpit as a template
+2. Download the latest `datahub-widget-library.tgz` from the releases section
+3. Inside your Cumulocity application folder, run: `npm install <path>/datahub-widget-library.tgz`
+4. Add the widget to an NgModule:
+    ```typescript
+    NgModule({
+       imports: [
+           ...
+           DatahubWidgetModule
+           ...
+       ],
+    })
+    ```
+
+##  Building the Widget
 1. Clone this repo: 
-```
-git clone https://github.com/SoftwareAG/cumulocity-runtime-widget.git
-```
+    ```
+    git clone https://github.com/SoftwareAG/cumulocity-datahub-table-widget.git
+    ```
 2. Install the dependencies:
-```
-cd cumulocity-runtime-widget
-npm install
-```
-3. Copy your widget's code into the src folder (or a subfolder).
-4. Reference your widget's Angular module in the public_api.ts (Comment out or delete the DemoWidgetModule)
-```typescript
-/* Add your widget's module(s) here */
-
-// export {DemoWidgetModule} from "./demo-widget/demo-widget.module";
-export {YourWidgetModule} from "./your-widget/your-widget.module";
-```
-5. Pick a **unique** contextPath for your widget, eg:
-```
-my-widget
-```
-6. Edit the **name** and **interleave** values in the package.json to include the new contextPath:<br>
-**Important:** Leave the `-CustomWidget` on the interleave option, and don't edit the `dist/bundle-src/custom-widget.js` part
-```json
-{
-  "name": "my-widget",
-  "interleave": {
-    "dist\\bundle-src\\custom-widget.js": "my-widget-CustomWidget",
-    "dist/bundle-src/custom-widget.js": "my-widget-CustomWidget"
-  },
-}
-```
-
-7. Edit the **contextPath** and **applicationKey** values in the cumulocity.json file to include the contextPath (Feel free to edit the name and icon):
-```json
-{
-  "name": "My Widget",
-  "contextPath": "my-widget",
-  "key": "my-widget-application-key",
-  "contentSecurityPolicy": "default-src 'self'",
-  "icon": {
-    "class": "fa fa-puzzle-piece"
-  },
-  "manifest": {
-    "noAppSwitcher": true
-  }
-}
-```
-8. Build the widget:
-```
-npm run build
-```
-9. After the build completes the `/dist` folder will contain a `widget.zip` file, this is your deployable widget
-
-## Deploying a Widget
-See the documentation for the [Cumulocity IoT Runtime Widget Loader](https://github.com/SoftwareAG/cumulocity-runtime-widget-loader)
+    ```
+    cd cumulocity-datahub-table-widget
+    npm install
+    ```
+3. Build the widget:
+    ```
+    npm run build
+    ```
+4. After the build completes the `/dist` folder will contain a `widget.zip` file, this is your deployable widget
 
 ------------------------------
 
