@@ -8,5 +8,5 @@
     "flatModuleFile": "custom-widget"
   },
   "whitelistedNonPeerDependencies": ["."],
-  "dest": "dist/ng-packagr-output"
+  "dest": "dist/widget-library"
 }
