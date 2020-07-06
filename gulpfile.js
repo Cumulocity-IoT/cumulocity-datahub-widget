@@ -8,16 +8,23 @@ const fs = require('fs-extra');
 const del = require('del');
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
+const replace = require('gulp-replace');
+const path = require('path');
 
 function clean() {
     return del(['dist']);
 }
 
-function compile() {
-    return ngPackagr.build({project: './ng-package.json'})
-        .then(() => fs.copy('./dist/widget-library/fesm5', './dist/bundle-src'))
-        .then(() => exec("npm pack ./widget-library", { cwd: './dist' }))
-}
+const compile = series(
+    () => ngPackagr.build({project: './ng-package.json'}),
+    () => fs.copy('./dist/widget-library/fesm5', './dist/bundle-src'),
+    () => src('./dist/widget-library/**/*')
+        .pipe(replace(/~styles/g, function() {
+            return path.relative(this.file.dirname, './dist/widget-library/styles').replace(/\\/g, '/')
+        }))
+        .pipe(dest('./dist/widget-library/')),
+    () => exec("npm pack ./widget-library", { cwd: './dist' })
+)
 
 function bundle() {
     const widgetCode = src('./dist/bundle-src/custom-widget.js', {sourcemaps: true})
