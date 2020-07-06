@@ -42,6 +42,7 @@
     "fs-extra": "^9.0.0",
     "gulp": "^4.0.2",
     "gulp-filter": "^6.0.0",
+    "gulp-replace": "^1.0.0",
     "gulp-zip": "^5.0.1",
     "merge-stream": "^2.0.0",
     "ng-packagr": "^9.1.1",
