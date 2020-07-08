@@ -2,7 +2,7 @@ const URLImportPlugin  = require("webpack-external-import/webpack");
 const path = require('path');
 
 module.exports = {
-    mode: 'development',
+    mode: 'production',
     devtool: 'source-map',
     entry: {
         [require('./cumulocity.json').contextPath]: './dist/bundle-src/custom-widget.js'
