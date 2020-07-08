@@ -1,6 +1,8 @@
 # Cumulocity IoT DataHub Table Widget
 A table widget for Cumulocity IoT displaying the results of a DataHub query.
 
+![DataHub Table Image](https://user-images.githubusercontent.com/38696279/86902608-18e75600-c106-11ea-8e83-6c4d02a781a3.png)
+
 ## Installing the widget
 There are 2 options for installtion:
 1. Using the [Runtime Widget Loader](https://github.com/SoftwareAG/cumulocity-runtime-widget-loader) - Just upload the widget as a zip to your tenant
