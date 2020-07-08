@@ -37,13 +37,19 @@ import '~styles/index.css';
         {
             provide: HOOK_COMPONENTS,
             multi: true,
-            useValue: {
+            useValue: [{
                 id: 'softwareag.globalpresales.datahubwidget',
-                label: 'DataHub Table',
+                label: 'DataHub table',
                 description: 'Displays DataHub query results in a table',
                 component: DatahubWidgetComponent,
                 configComponent: DatahubWidgetConfig,
-            }
+                previewImage: require("~styles/previewImage.png"),
+                data: {
+                    settings: {
+                        noDeviceTarget: true
+                    }
+                }
+            }]
         }
     ],
 })

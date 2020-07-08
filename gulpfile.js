@@ -1,7 +1,5 @@
 const {src, dest, series} = require('gulp');
-const webpack = require('webpack-stream');
 const filter = require('gulp-filter');
-const merge = require('merge-stream');
 const zip = require('gulp-zip');
 const ngPackagr = require('ng-packagr');
 const fs = require('fs-extra');
@@ -16,37 +14,29 @@ function clean() {
 }
 
 const compile = series(
-    () => ngPackagr.build({project: './ng-package.json'}),
-    () => fs.copy('./dist/widget-library/fesm5', './dist/bundle-src'),
-    () => src('./dist/widget-library/**/*')
-        .pipe(replace(/~styles/g, function() {
-            return path.relative(this.file.dirname, './dist/widget-library/styles').replace(/\\/g, '/')
-        }))
-        .pipe(dest('./dist/widget-library/')),
-    () => exec("npm pack ./widget-library", { cwd: './dist' })
+    function buildAngularLibrary() { return ngPackagr.build({project: './ng-package.json'}) },
+    function separateWebpackBuildSrc() { return fs.copy('./dist/widget-library/fesm5', './dist/bundle-src') },
+    function replaceStylePath() {
+        return src('./dist/widget-library/**/*')
+            .pipe(replace(/~styles/g, function () {
+                return path.relative(this.file.dirname, './dist/widget-library/styles').replace(/\\/g, '/')
+            }))
+            .pipe(dest('./dist/widget-library/'))
+    },
+    function packLibrary() { return exec("npm pack ./widget-library", { cwd: './dist' }) }
 )
 
-function bundle() {
-    const widgetCode = src('./dist/bundle-src/custom-widget.js', {sourcemaps: true})
-        .pipe(webpack(require('./webpack.config.js')))
-        // Filter out the webpackRuntime chunk, we only need the widget code chunks
-        .pipe(filter(file => !/^[a-f0-9]{20}\.js(\.map)?$/.test(file.relative)));
-
-    const c8yJson = src('./cumulocity.json')
-
-    const codeOutput = merge(
-            widgetCode,
-            c8yJson
-        );
-
-    return merge(
-        codeOutput
-            .pipe(dest('dist/widget/')),
-        codeOutput
+const bundle = series(
+    function webpackBuild() { return exec("npx webpack") },
+    function copyCumulocityJson() { return fs.copy('./cumulocity.json', './dist/widget/cumulocity.json')},
+    function createZip() {
+        return src('./dist/widget/**/*')
+            // Filter out the webpackRuntime chunk, we only need the widget code chunks
+            .pipe(filter(file => !/^[a-f0-9]{20}\.js(\.map)?$/.test(file.relative)))
             .pipe(zip('widget.zip'))
             .pipe(dest('dist/'))
-    )
-}
+    }
+)
 
 exports.clean = clean;
 exports.build = compile;

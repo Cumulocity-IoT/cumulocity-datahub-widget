@@ -2,8 +2,11 @@ const URLImportPlugin  = require("webpack-external-import/webpack");
 const path = require('path');
 
 module.exports = {
-    mode: 'production',
+    mode: 'development',
     devtool: 'source-map',
+    entry: {
+        [require('./cumulocity.json').contextPath]: './dist/bundle-src/custom-widget.js'
+    },
     resolve: {
         alias: {
             "~styles": path.resolve(__dirname, 'styles')
@@ -23,6 +26,7 @@ module.exports = {
                 loader: 'url-loader',
                 options: {
                     limit: 8192,
+                    publicPath: `/apps/${require('./cumulocity').contextPath}/`
                 },
             }
         ]
@@ -54,6 +58,7 @@ module.exports = {
         })
     ],
     output: {
-        filename: '[contenthash].js'
+        filename: '[contenthash].js',
+        path: path.resolve(__dirname, 'dist/widget')
     },
 };
