@@ -4,7 +4,7 @@
     "dist\\bundle-src\\custom-widget.js": "cumulocity-datahub-widget-CustomWidget",
     "dist/bundle-src/custom-widget.js": "cumulocity-datahub-widget-CustomWidget"
   },
-  "version": "0.0.0-development",
+  "version": "1.0.0",
   "description": "An example widget that pulls data from Cumulocity IoT DataHub (written by Software AG Global Presales)",
   "scripts": {
     "build": "gulp"
