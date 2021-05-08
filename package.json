@@ -46,7 +46,7 @@
     "gulp-filter": "^6.0.0",
     "gulp-replace": "^1.0.0",
     "gulp-zip": "^5.0.1",
-    "ng-packagr": "^9.1.1",
+    "ng-packagr": "^10.1.1",
     "ngx-bootstrap": "5.5.0",
     "rxjs": "~6.4.0",
     "rxjs-compat": "^6.5.3",
