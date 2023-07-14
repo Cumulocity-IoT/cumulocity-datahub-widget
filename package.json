@@ -21,7 +21,7 @@
     "@angular/forms": "8.2.13",
     "@angular/http": "7.2.15",
     "@angular/router": "8.2.13",
-    "@c8y/ngx-components": "1006.3.0"
+    "@c8y/ngx-components": "1016.0.303"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "0.803.17",
@@ -35,7 +35,7 @@
     "@angular/http": "7.2.15",
     "@angular/platform-browser": "8.2.13",
     "@angular/router": "8.2.13",
-    "@c8y/ngx-components": "1006.3.0",
+    "@c8y/ngx-components": "1016.0.303",
     "ajv": "^6.9.1",
     "core-js": "^3.4.0",
     "css-loader": "^3.5.3",
